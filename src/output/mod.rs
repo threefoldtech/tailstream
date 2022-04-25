@@ -5,25 +5,15 @@ use url::Url;
 
 mod redis;
 pub use self::redis::Redis;
-
-pub struct Console {}
-
-impl Write for Console {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        std::io::stdout().write(buf)
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
-        std::io::stdout().flush()
-    }
-}
+mod ws;
+pub use ws::WebSocket;
 
 pub fn output<S: AsRef<str>>(url: S, compression: CompressionKind) -> Result<Box<dyn Write>> {
     let mut u = Url::parse(url.as_ref()).context("failed to parse output url")?;
 
     match u.scheme() {
         // console always ignores compression
-        "console" => Ok(Box::new(Console {})),
+        "console" => Ok(Box::new(std::io::stdout())),
         "redis" => {
             let channel: String = u.path().trim_start_matches('/').into();
             if channel.is_empty() {
@@ -31,6 +21,10 @@ pub fn output<S: AsRef<str>>(url: S, compression: CompressionKind) -> Result<Box
             }
             u.set_path("");
             let writer = Compression::new(Redis::new(u, channel)?, compression);
+            Ok(Box::new(writer))
+        }
+        "ws" | "wss" => {
+            let writer = Compression::new(WebSocket::new(url)?, compression);
             Ok(Box::new(writer))
         }
         _ => bail!("unknown output type"),
