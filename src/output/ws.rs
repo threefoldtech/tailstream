@@ -73,7 +73,7 @@ impl ManageConnection for WebsocketManager {
     /// Attempts to create a new connection.
     fn connect(&self) -> Result<Self::Connection, Self::Error> {
         let mut builder = ClientBuilder::new(&self.url).map_err(|_| PoolError::ParseError)?;
-        builder.connect(None).map_err(|e| PoolError::SocketError(e))
+        builder.connect(None).map_err(PoolError::SocketError)
     }
 
     // is_valid is called before each connection borrow from the pool. Which causes
@@ -81,7 +81,7 @@ impl ManageConnection for WebsocketManager {
     // todo: find another way to check if connection is still on.
     fn is_valid(&self, conn: &mut Self::Connection) -> Result<(), Self::Error> {
         conn.send_message(&Message::ping(&PING[..]))
-            .map_err(|e| PoolError::SocketError(e))
+            .map_err(PoolError::SocketError)
     }
 
     // has_broken is called before connection is returned to pool

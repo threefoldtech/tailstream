@@ -86,7 +86,7 @@ where
                 let mut enc = GzEncoder::new(Vec::new(), flate2::Compression::best());
                 enc.write_all(buf)?;
 
-                self.inner.write(&enc.finish()?)?;
+                let _ = self.inner.write(&enc.finish()?)?;
 
                 // write must return the length of its input or it will panic
                 Ok(buf.len())
