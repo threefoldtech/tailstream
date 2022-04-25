@@ -10,9 +10,12 @@ use anyhow::Result;
 use clap::Parser;
 use std::path::PathBuf;
 
+const GIT_VERSION: &str =
+    git_version::git_version!(args = ["--tags", "--always", "--dirty=-modified"]);
+
 /// A tail like tool but tail the file to a configurable output module
 #[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
+#[clap(author, version = GIT_VERSION, about, long_about = None)]
 struct Args {
     /// Output stream. defaults to console://. Other output supports
     /// redis://[user:password@]<address[:port]>
@@ -26,7 +29,8 @@ struct Args {
     #[clap(short, long, default_value_t = output::CompressionKind::Gzip)]
     compression: output::CompressionKind,
 
-    #[clap(short, long, default_value_t = 2*1024)]
+    /// output the last TAIL bytes default to 8k
+    #[clap(short, long, default_value_t = 8*1024)]
     tail: u64,
     /// enable debug logs
     #[clap(short, long)]
