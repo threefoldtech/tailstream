@@ -15,7 +15,7 @@ jobs:
       - name: Prepare
         run: |
           sudo apt-get update
-          sudo apg-get install musl-dev musl-tools
+          sudo apt-get install musl-dev musl-tools
       - name: Checkout code
         uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
