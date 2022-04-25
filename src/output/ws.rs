@@ -76,24 +76,16 @@ impl ManageConnection for WebsocketManager {
         builder.connect(None).map_err(|e| PoolError::SocketError(e))
     }
 
-    /// Determines if the connection is still connected to the database.
-    ///
-    /// A standard implementation would check if a simple query like `SELECT 1`
-    /// succeeds.
+    // is_valid is called before each connection borrow from the pool. Which causes
+    // a ping call to be made before sending the actual data.
+    // todo: find another way to check if connection is still on.
     fn is_valid(&self, conn: &mut Self::Connection) -> Result<(), Self::Error> {
         conn.send_message(&Message::ping(&PING[..]))
             .map_err(|e| PoolError::SocketError(e))
     }
 
-    /// *Quickly* determines if the connection is no longer usable.
-    ///
-    /// This will be called synchronously every time a connection is returned
-    /// to the pool, so it should *not* block. If it returns `true`, the
-    /// connection will be discarded.
-    ///
-    /// For example, an implementation might check if the underlying TCP socket
-    /// has disconnected. Implementations that do not support this kind of
-    /// fast health check may simply return `false`.
+    // has_broken is called before connection is returned to pool
+    // need to be non-blocking. dummy implementation is to return false
     fn has_broken(&self, _: &mut Self::Connection) -> bool {
         false
     }
