@@ -1,8 +1,9 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use std::io::Write;
+use url::Url;
 
 mod redis;
-pub use redis::Redis;
+pub use self::redis::Redis;
 
 pub struct Console {}
 
@@ -16,10 +17,19 @@ impl Write for Console {
     }
 }
 
-pub fn output<S: AsRef<str>>(_url: S) -> Result<Box<dyn Write>> {
-    if true {
-        Ok(Box::new(Console {}))
-    } else {
-        Ok(Box::new(Redis::new()?))
+pub fn output<S: AsRef<str>>(url: S) -> Result<Box<dyn Write>> {
+    let mut u = Url::parse(url.as_ref()).context("failed to parse output url")?;
+
+    match u.scheme() {
+        "console" => Ok(Box::new(Console {})),
+        "redis" => {
+            let channel: String = u.path().trim_start_matches('/').into();
+            if channel.is_empty() {
+                bail!("channel is missing");
+            }
+            u.set_path("");
+            Ok(Box::new(Redis::new(u, channel)?))
+        }
+        _ => bail!("unknown output type"),
     }
 }
