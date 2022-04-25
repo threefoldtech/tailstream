@@ -30,10 +30,6 @@ jobs:
         with:
           command: clippy
       - uses: actions-rs/cargo@v1
-        name: Run tests
-        with:
-          command: test
-      - uses: actions-rs/cargo@v1
         name: Build
         with:
           command: build
