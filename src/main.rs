@@ -10,7 +10,7 @@ use anyhow::Result;
 use clap::Parser;
 use std::path::PathBuf;
 
-/// Simple program to greet a person
+/// A tail like tool but tail the file to a configurable output module
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
@@ -32,6 +32,7 @@ struct Args {
     #[clap(short, long)]
     debug: bool,
 
+    /// file to watch
     file: PathBuf,
 }
 

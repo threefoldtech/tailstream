@@ -1,9 +1,7 @@
 [package]
-name = "logstream"
+name = "tailstream"
 version = "0.1.0"
 edition = "2021"
-about = "a tail like tool but tail the file to an output driver"
-author = "Muhamad Azmy"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -11,8 +9,10 @@ anyhow = "1.0"
 inotify = "0.10"
 log = "0.4"
 simple_logger = "2.1.0"
-clap =  { version = "3.1", features = ["derive"] }
+clap =  {version = "3.1", features = ["derive"]}
 url = "2.2"
-redis = {version = "0.21", features = ["r2d2"] }
+redis = {version = "0.21", features = ["r2d2"]}
 r2d2 = "0.8"
 flate2 = "1.0"
+websocket = {version = "0.26", features=["sync", "sync-ssl"]}
+openssl = { version = "=0.10.33", features = ["vendored"] }
