@@ -7,27 +7,26 @@ use std::path::Path;
 
 pub fn tail<P: AsRef<Path>>(path: P, tail: u64, out: &mut dyn Write) -> Result<()> {
     let mut file = OpenOptions::new()
-        .create(true)
-        .write(true)
         .read(true)
         .open(path.as_ref())
-        .with_context(|| format!("failed to open file {:?}", path.as_ref()))?;
+        .with_context(|| format!("cannot open file {:?}", path.as_ref()))?;
 
     match file.metadata().context("failed to get file stat")?.size() {
-        size if size > tail => file
-            .seek(SeekFrom::End(-(tail as i64)))
-            .context("failed to seek file")?,
-        _ => 0,
+        size if size > tail => {
+            file.seek(SeekFrom::End(-(tail as i64)))
+                .context("failed to seek file")?;
+        }
+        _ => (),
     };
 
-    copy(&mut file, out).context("failed to copy file content")?;
+    copy(&mut file, out).context("failed to tail file content")?;
 
     let mut notify = Inotify::init()?;
     notify
         .add_watch(path, WatchMask::MODIFY)
         .context("failed to add file watch")?;
 
-    let mut event_buffer = [0u8; 4096];
+    let mut event_buffer = [0u8; 4 * 1024];
     let mut prev_size: u64 = 0;
 
     loop {
@@ -37,7 +36,6 @@ pub fn tail<P: AsRef<Path>>(path: P, tail: u64, out: &mut dyn Write) -> Result<(
 
         for event in events {
             if event.mask.contains(EventMask::MODIFY) {
-                debug!("file modified event");
                 let size = file.metadata()?.size();
                 if size < prev_size {
                     // file has been truncated. We need to seek
