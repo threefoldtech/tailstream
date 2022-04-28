@@ -13,7 +13,7 @@ impl Redis {
         //let info: redis::ConnectionInfo = url.as_ref().parse()?;
         let client = Client::open(url.as_ref()).context("failed to create redis connection")?;
         let pool = Pool::builder()
-            .max_size(4)
+            .max_size(1)
             .idle_timeout(Some(std::time::Duration::from_secs(5 * 60)))
             .build(client)
             .context("failed to create redis pool")?;
