@@ -7,7 +7,7 @@ Output is configured via the `--output` which accepts a url.
 
 Currently tailstream supports three output types:
 - `console://` [default] this output prints the file content to console. It doesn't accept any extra arguments
-- `redis://[<username>][:<password>@]<hostname>[:port][/<db>]/<channel>`. All logs (chunks) are `PUBLISH`ED to the `channel`. `channel` can be any valid PUB/SUB redis channel name.
+- `redis://[<username>][:<password>@]<hostname>[:port]/<channel>`. All logs (chunks) are `PUBLISH`ED to the `channel`. `channel` can be any valid PUB/SUB redis channel name.
 - `ws[s]://<server>[:port]/[path]`. All logs (chunks) are sent to the websocket as `binary` messages. The server then can decide what to do with the messages.
 
 ### Compression
