@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use r2d2::Pool;
+use redis::ConnectionAddr::Tcp;
 use redis::{Client, Commands};
 use std::io::{Error, ErrorKind, Write};
 
@@ -10,8 +11,14 @@ pub struct Redis {
 
 impl Redis {
     pub fn new<U: AsRef<str>, C: Into<String>>(url: U, channel: C) -> Result<Redis> {
-        //let info: redis::ConnectionInfo = url.as_ref().parse()?;
-        let client = Client::open(url.as_ref()).context("failed to create redis connection")?;
+        let mut info: redis::ConnectionInfo =
+            url.as_ref().parse().context("failed to parse redis url")?;
+        if let Tcp(ref ip, ref port) = &info.addr {
+            // url parse returns ipv6 surrounded by []
+            // net's TcpStream (used by the client) doesn't work with it surrounded
+            info.addr = Tcp(ip.trim_matches(&['[', ']'] as &[char]).to_string(), *port);
+        }
+        let client = Client::open(info).context("failed to create redis connection")?;
         let pool = Pool::builder()
             .max_size(1)
             .idle_timeout(Some(std::time::Duration::from_secs(5 * 60)))
