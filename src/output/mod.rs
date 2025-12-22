@@ -7,6 +7,8 @@ mod redis;
 pub use self::redis::Redis;
 mod ws;
 pub use ws::WebSocket;
+mod loki;
+pub use loki::Loki;
 
 pub fn output<S: AsRef<str>>(url: S, compression: CompressionKind) -> Result<Box<dyn Write>> {
     let mut u = Url::parse(url.as_ref()).context("failed to parse output url")?;
@@ -25,6 +27,10 @@ pub fn output<S: AsRef<str>>(url: S, compression: CompressionKind) -> Result<Box
         }
         "ws" | "wss" => {
             let writer = Compression::new(WebSocket::new(url)?, compression);
+            Ok(Box::new(writer))
+        }
+        "http" | "https" => {
+            let writer = Compression::new(Loki::new(url)?, compression);
             Ok(Box::new(writer))
         }
         _ => bail!("unknown output type"),
