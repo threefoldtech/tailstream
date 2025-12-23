@@ -29,10 +29,7 @@ pub fn output<S: AsRef<str>>(url: S, compression: CompressionKind) -> Result<Box
             let writer = Compression::new(WebSocket::new(url)?, compression);
             Ok(Box::new(writer))
         }
-        "http" | "https" => {
-            let writer = Compression::new(Loki::new(url)?, compression);
-            Ok(Box::new(writer))
-        }
+        "http" | "https" => Ok(Box::new(Loki::new(url)?)),
         _ => bail!("unknown output type"),
     }
 }

@@ -20,20 +20,46 @@ struct LokiPayload {
 pub struct Loki {
     client: reqwest::blocking::Client,
     url: String,
+    username: Option<String>,
+    password: Option<String>,
+    tenant_id: Option<String>,
 }
 
 impl Loki {
     pub fn new<U: AsRef<str>>(url: U) -> Result<Self> {
+        let parsed = url::Url::parse(url.as_ref())?;
+        let username = if parsed.username().is_empty() {
+            None
+        } else {
+            Some(parsed.username().to_string())
+        };
+
+        let password = parsed.password().map(|p| p.to_string());
+
+        let tenant_id = parsed
+            .query_pairs()
+            .find(|(key, _)| key == "tenant_id" || key == "tenant")
+            .map(|(_, value)| value.to_string());
+
+        let base_url = format!(
+            "{}://{}{}",
+            parsed.scheme(),
+            parsed.host_str().unwrap_or("localhost"),
+            parsed.port().map(|p| format!(":{}", p)).unwrap_or_default()
+        );
+
+        let push_url = format!("{}{}", base_url.trim_end_matches('/'), LOKI_PUSH_PATH);
+
         let client = reqwest::blocking::Client::builder()
             .timeout(Duration::from_secs(5))
             .build()?;
 
-        let base_url = url.as_ref().trim_end_matches('/');
-        let push_url = format!("{}{}", base_url, LOKI_PUSH_PATH);
-
         Ok(Loki {
             client,
             url: push_url,
+            username,
+            password,
+            tenant_id,
         })
     }
 }
@@ -61,10 +87,17 @@ impl Write for Loki {
             }],
         };
 
-        let response = self
-            .client
-            .post(&self.url)
-            .json(&payload)
+        let mut request = self.client.post(&self.url).json(&payload);
+
+        if let (Some(username), Some(password)) = (&self.username, &self.password) {
+            request = request.basic_auth(username, Some(password));
+        }
+
+        if let Some(tenant_id) = &self.tenant_id {
+            request = request.header("X-Scope-OrgID", tenant_id);
+        }
+
+        let response = request
             .send()
             .map_err(|e| Error::new(ErrorKind::Other, e))?;
 
