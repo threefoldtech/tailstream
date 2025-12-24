@@ -23,6 +23,7 @@ pub struct Loki {
     username: Option<String>,
     password: Option<String>,
     tenant_id: Option<String>,
+    buffer: Vec<u8>,
 }
 
 impl Loki {
@@ -60,21 +61,15 @@ impl Loki {
             username,
             password,
             tenant_id,
+            buffer: Vec::new(),
         })
     }
-}
 
-impl Write for Loki {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+    fn send_line(&mut self, log_line: &str) -> std::io::Result<()> {
         let timestamp_ns = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos()
-            .to_string();
-
-        let log_line = std::str::from_utf8(buf)
-            .map_err(|e| Error::new(ErrorKind::InvalidData, e))?
-            .trim()
             .to_string();
 
         let mut labels = HashMap::new();
@@ -83,7 +78,7 @@ impl Write for Loki {
         let payload = LokiPayload {
             streams: vec![LokiStream {
                 stream: labels,
-                values: vec![[timestamp_ns, log_line]],
+                values: vec![[timestamp_ns, log_line.to_string()]],
             }],
         };
 
@@ -108,10 +103,42 @@ impl Write for Loki {
             ));
         }
 
+        Ok(())
+    }
+}
+
+impl Write for Loki {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.buffer.extend_from_slice(buf);
+
+        while let Some(newline_pos) = self.buffer.iter().position(|&b| b == b'\n') {
+            let line_bytes = self.buffer.drain(..=newline_pos).collect::<Vec<u8>>();
+            let log_line = std::str::from_utf8(&line_bytes)
+                .map_err(|e| Error::new(ErrorKind::InvalidData, e))?
+                .trim();
+
+            if !log_line.is_empty() {
+                self.send_line(log_line)?;
+            }
+        }
+
         Ok(buf.len())
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
+        // Send any remaining data in buffer
+        if !self.buffer.is_empty() {
+            let log_line = std::str::from_utf8(&self.buffer)
+                .map_err(|e| Error::new(ErrorKind::InvalidData, e))?
+                .trim()
+                .to_string();
+
+            self.buffer.clear();
+
+            if !log_line.is_empty() {
+                self.send_line(&log_line)?;
+            }
+        }
         Ok(())
     }
 }
