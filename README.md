@@ -1,10 +1,10 @@
-# Tailstream
+# Grid Tailstream
 
-Tailstream is a file watching and log streaming tool that monitors files for appended data and forwards new content to configurable endpoints in real time. It functions like `tail -f` but with pluggable output backends, making it suitable for forwarding logs and metrics from local files to remote aggregation services.
+Grid Tailstream is a file watching and log streaming tool that monitors files for appended data and forwards new content to configurable endpoints in real time. It functions like `tail -f` but with pluggable output backends, making it suitable for forwarding logs and metrics from local files to remote aggregation services.
 
 ## What this is
 
-Tailstream watches a specified file and streams any newly appended content to a configured output destination. By default it prints to the console (acting like `tail -f`), but it can also publish to Redis Pub/Sub channels or send binary messages over WebSockets. Output chunks can optionally be compressed with gzip.
+Grid Tailstream watches a specified file and streams any newly appended content to a configured output destination. By default it prints to the console (acting like `tail -f`), but it can also publish to Redis Pub/Sub channels or send binary messages over WebSockets. Output chunks can optionally be compressed with gzip.
 
 ## What this repository contains
 
@@ -16,7 +16,7 @@ Tailstream watches a specified file and streams any newly appended content to a 
 
 ## Role in the stack
 
-Tailstream operates as a log collection and forwarding component within the broader infrastructure stack. It can run on nodes and services to stream local log files to centralized aggregation systems. It fits into the observability layer alongside metrics and logging infrastructure.
+Grid Tailstream operates as a log collection and forwarding component within the broader infrastructure stack. It can run on nodes and services to stream local log files to centralized aggregation systems. It fits into the observability layer alongside metrics and logging infrastructure.
 
 ## Relation to ThreeFold
 
@@ -30,7 +30,7 @@ This repository is owned and maintained by TF-Tech NV, a Belgian company respons
 
 Output is configured via the `--output` flag, which accepts a URL.
 
-Currently tailstream supports three output types:
+Currently Grid Tailstream supports three output types:
 
 - `console://` [default] — Prints the file content to console. Does not accept any extra arguments.
 - `redis://[<username>][:<password>@]<hostname>[:port]/<channel>` — All log chunks are `PUBLISH`ed to the specified `channel`. The channel can be any valid Redis Pub/Sub channel name.
