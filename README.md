@@ -42,3 +42,8 @@ OPTIONS:
     -t, --tail <TAIL>                  output the last TAIL bytes default to 8k [default: 8192]
     -V, --version                      Print version information
 ```
+
+## License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+Copyright (c) TFTech NV.
